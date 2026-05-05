@@ -17,14 +17,24 @@ import {
 } from 'recharts';
 import './Dashboard.css';
 
+import { useOrders } from '../context/OrderContext';
+
 const Dashboard = () => {
+  const { orders } = useOrders();
+
+  const activeCount = orders.filter(o => o.status === 'Active' || o.status === 'Pending').length;
+  const completedCount = orders.filter(o => o.status === 'Completed').length;
+  const deliveredCount = orders.filter(o => o.status === 'Delivered').length;
+  const totalRevenue = orders.reduce((acc, o) => acc + (Number(o.total) || 0), 0);
+
   const stats = [
-    { label: 'Active Orders', value: '42', icon: Clock, color: 'var(--color-pending)', trend: '+12%' },
-    { label: 'Completed', value: '156', icon: CheckCircle2, color: 'var(--color-completed)', trend: '+5%' },
-    { label: 'Delivered', value: '1,284', icon: ShoppingBag, color: 'var(--color-delivered)', trend: '+18%' },
-    { label: 'Total Revenue', value: '₹84,250', icon: DollarSign, color: 'var(--color-primary)', trend: '+24%' },
+    { label: 'Active Orders', value: activeCount, icon: Clock, color: 'var(--color-pending)', trend: '+12%' },
+    { label: 'Completed', value: completedCount, icon: CheckCircle2, color: 'var(--color-completed)', trend: '+5%' },
+    { label: 'Delivered', value: deliveredCount, icon: ShoppingBag, color: 'var(--color-delivered)', trend: '+18%' },
+    { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'var(--color-primary)', trend: '+24%' },
   ];
 
+  // Keep mock data for graphs that require historical timestamps we don't track yet
   const salesData = [
     { name: 'Mon', sales: 4000 },
     { name: 'Tue', sales: 3000 },
@@ -44,10 +54,18 @@ const Dashboard = () => {
     { month: 'Jun', revenue: 67000 },
   ];
 
+  // Dynamic pie chart calculation
+  const stitchingCount = orders.filter(o => o.serviceType === 'stitching').length;
+  const alterationCount = orders.filter(o => o.serviceType === 'alteration').length;
+  const totalServices = (stitchingCount + alterationCount) || 1; 
+
   const serviceData = [
-    { name: 'Stitching', value: 70 },
-    { name: 'Alteration', value: 30 },
+    { name: 'Stitching', value: Math.round((stitchingCount / totalServices) * 100) },
+    { name: 'Alteration', value: Math.round((alterationCount / totalServices) * 100) },
   ];
+
+  const priorityOrders = orders.filter(o => o.urgency).slice(0, 5);
+  const displayOrders = priorityOrders.length > 0 ? priorityOrders : orders.slice(0, 5);
 
   const COLORS = ['var(--color-primary)', 'var(--color-primary-light)'];
 
@@ -196,22 +214,26 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>#ORD-7241</td>
-                <td>Priya Sharma</td>
-                <td>Bridal Blouse</td>
-                <td>Today</td>
-                <td><span className="badge badge-urgent">Urgent!</span></td>
-                <td><button className="text-btn">Edit</button></td>
-              </tr>
-              <tr>
-                <td>#ORD-7238</td>
-                <td>Anjali Nair</td>
-                <td>Designer Saree</td>
-                <td>Tomorrow</td>
-                <td><span className="badge badge-pending">Pending</span></td>
-                <td><button className="text-btn">Edit</button></td>
-              </tr>
+              {displayOrders.map(order => (
+                <tr key={order.id}>
+                  <td>
+                    <Link to={`/orders/${order.id}`} className="order-link">#{order.id}</Link>
+                  </td>
+                  <td>{order.customerName}</td>
+                  <td>{order.category.toUpperCase()}</td>
+                  <td>{order.deliveryDate}</td>
+                  <td>
+                    {order.urgency ? (
+                      <span className="badge badge-urgent">Urgent!</span>
+                    ) : (
+                      <span className={`badge badge-${order.status.toLowerCase()}`}>{order.status}</span>
+                    )}
+                  </td>
+                  <td>
+                    <Link to={`/orders/${order.id}`} className="text-btn">View</Link>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

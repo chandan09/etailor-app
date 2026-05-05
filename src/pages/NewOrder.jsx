@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   User, 
   ShoppingBag, 
@@ -9,25 +9,51 @@ import {
   ArrowLeft,
   Search,
   Plus,
-  Clock
+  Clock,
+  MapPin,
+  CreditCard
 } from 'lucide-react';
+import { useSearch } from '../context/SearchContext';
+import { useOrders } from '../context/OrderContext';
 import './NewOrder.css';
 
 const NewOrder = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const location = useLocation();
+  const { searchTerm, setSearchTerm } = useSearch();
+  const { addOrder, updateOrder, getOrderById } = useOrders();
+  
+  const queryParams = new URLSearchParams(location.search);
+  const editOrderId = queryParams.get('edit');
+  const startStep = parseInt(queryParams.get('step')) || 1;
+  
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [step, setStep] = useState(startStep);
   const [formData, setFormData] = useState({
     customerName: '',
     mobile: '',
-    area: '',
-    serviceType: 'stitching', // 'stitching' or 'alteration'
+    address: '',
+    serviceType: 'stitching',
     category: '',
-    description: '',
     measurements: {},
+    measurementUnit: 'inches',
+    total: 0,
+    paid: 0,
+    description: '',
     urgency: false,
     deliveryDate: ''
   });
   const [suggestions, setSuggestions] = useState([]);
+
+  useEffect(() => {
+    if (editOrderId) {
+      const existingOrder = getOrderById(editOrderId);
+      if (existingOrder) {
+        setFormData(existingOrder);
+        setIsEditMode(true);
+      }
+    }
+  }, [editOrderId, getOrderById]);
 
   const categories = [
     { id: 'blouse', label: 'Blouse', icon: '👚' },
@@ -60,7 +86,6 @@ const NewOrder = () => {
   };
 
   const handleNext = () => {
-    console.log('Current Step:', step); // For debugging
     if (step === 1 && (!formData.customerName || !formData.mobile)) {
       alert('Please enter both Customer Name and Mobile Number.');
       return;
@@ -70,9 +95,9 @@ const NewOrder = () => {
       return;
     }
     
-    if (step < 5) {
+    if (step < 6) {
       setStep(prev => prev + 1);
-      window.scrollTo(0, 0); // Scroll to top for new step
+      window.scrollTo(0, 0);
     }
   };
 
@@ -120,17 +145,18 @@ const NewOrder = () => {
   return (
     <div className="new-order-container">
       <div className="wizard-stepper">
-        {[1, 2, 3, 4, 5].map((num) => (
+        {[1, 2, 3, 4, 5, 6].map((num) => (
           <div key={num} className={`step-item ${step >= num ? 'active' : ''} ${step > num ? 'completed' : ''}`}>
             <div className="step-number">{step > num ? <CheckCircle size={20} /> : num}</div>
             <span className="step-label">
               {num === 1 && 'Customer'}
               {num === 2 && 'Category'}
               {num === 3 && 'Measurements'}
-              {num === 4 && 'Delivery'}
-              {num === 5 && 'Review'}
+              {num === 4 && 'Financials'}
+              {num === 5 && 'Delivery'}
+              {num === 6 && 'Review'}
             </span>
-            {num < 5 && <div className="step-line"></div>}
+            {num < 6 && <div className="step-line"></div>}
           </div>
         ))}
       </div>
@@ -142,18 +168,18 @@ const NewOrder = () => {
             <p className="step-desc">Enter customer details or search existing profile.</p>
             <div className="form-grid">
               <div className="form-row">
-                <div className="form-group search-container">
+                <div className="form-group">
                   <label>Mobile Number</label>
                   <div className="input-with-icon">
                     <Search size={18} />
                     <input 
                       type="tel" 
-                      placeholder="Search phone..." 
+                      placeholder="Enter phone to search..." 
                       value={formData.mobile}
                       onChange={(e) => handleMobileSearch(e.target.value)}
                     />
                   </div>
-                  {suggestions.length > 0 && step === 1 && (
+                  {suggestions.length > 0 && (
                     <div className="suggestions-dropdown">
                       {suggestions.map((c, i) => (
                         <div key={i} className="suggestion-item" onClick={() => selectCustomer(c)}>
@@ -180,22 +206,34 @@ const NewOrder = () => {
               
               <div className="form-row">
                 <div className="form-group">
-                  <label>Area / Locality</label>
+                  <label>Customer Address</label>
                   <div className="input-with-icon">
-                    <Plus size={18} />
-                    <input 
-                      type="text" 
-                      placeholder="Enter locality..." 
-                      value={formData.area}
-                      onChange={(e) => setFormData({...formData, area: e.target.value})}
-                    />
+                    <MapPin size={18} />
+                    <textarea 
+                      placeholder="Enter full address for delivery..." 
+                      value={formData.address}
+                      style={{ minHeight: '80px', paddingTop: '10px' }}
+                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    ></textarea>
                   </div>
                 </div>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <label>Area / Locality</label>
+                    <div className="input-with-icon">
+                      <Plus size={18} />
+                      <input 
+                        type="text" 
+                        placeholder="Enter locality..." 
+                        value={formData.area}
+                        onChange={(e) => setFormData({...formData, area: e.target.value})}
+                      />
+                    </div>
+                  </div>
                   <button 
                     className="outline-btn" 
-                    style={{ height: '52px', width: '100%', justifyContent: 'center' }}
-                    onClick={() => setFormData({customerName: '', mobile: '', area: '', category: '', measurements: {}, urgency: false})}
+                    style={{ height: '52px', justifyContent: 'center', whiteSpace: 'nowrap' }}
+                    onClick={() => setFormData(prev => ({...prev, customerName: '', mobile: '', address: '', area: ''}))}
                   >
                     <Plus size={16} /> New Customer
                   </button>
@@ -255,8 +293,14 @@ const NewOrder = () => {
             <div className="measurement-header">
               <h2>Measurements: {formData.category.toUpperCase()}</h2>
               <div className="unit-toggle">
-                <button className="active">Inches</button>
-                <button>cm</button>
+                <button 
+                  className={formData.measurementUnit === 'inches' ? 'active' : ''}
+                  onClick={() => setFormData({...formData, measurementUnit: 'inches'})}
+                >Inches</button>
+                <button 
+                  className={formData.measurementUnit === 'cm' ? 'active' : ''}
+                  onClick={() => setFormData({...formData, measurementUnit: 'cm'})}
+                >cm</button>
               </div>
             </div>
             
@@ -299,6 +343,43 @@ const NewOrder = () => {
         )}
 
         {step === 4 && (
+          <div className="step-content animate-slide-in">
+            <h2>Financial Overview</h2>
+            <p className="step-desc">Record the total bill and any advance payment received.</p>
+            <div className="financials-edit-grid">
+              <div className="form-group">
+                <label>Total Bill Amount (₹)</label>
+                <div className="input-with-icon">
+                  <CreditCard size={18} />
+                  <input 
+                    type="number" 
+                    placeholder="0.00" 
+                    value={formData.total}
+                    onChange={(e) => setFormData({...formData, total: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Advance Payment Paid (₹)</label>
+                <div className="input-with-icon">
+                  <CheckCircle size={18} />
+                  <input 
+                    type="number" 
+                    placeholder="0.00" 
+                    value={formData.paid}
+                    onChange={(e) => setFormData({...formData, paid: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="balance-preview-card">
+                <p className="bp-label">Remaining Balance Due</p>
+                <p className="bp-value">₹{formData.total - formData.paid}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
           <div className="step-content animate-slide-in">
             <h2>Details & Delivery</h2>
             <p className="step-desc">Enter special instructions and the expected delivery date.</p>
@@ -344,7 +425,7 @@ const NewOrder = () => {
           </div>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <div className="step-content animate-slide-in">
             <h2>Master Review</h2>
             <p className="step-desc">Verify all details before creating the order.</p>
@@ -353,13 +434,19 @@ const NewOrder = () => {
                 <h4>Customer Info</h4>
                 <p><strong>{formData.customerName}</strong></p>
                 <p>{formData.mobile}</p>
-                <p>{formData.area}</p>
+                <p>{formData.address}</p>
               </div>
               <div className="review-card-mini">
                 <h4>Service & Outfit</h4>
                 <p><strong>{formData.serviceType.toUpperCase()}</strong></p>
                 <p>{formData.category.toUpperCase()}</p>
                 {formData.urgency && <span className="badge badge-urgent">URGENT</span>}
+              </div>
+              <div className="review-card-mini">
+                <h4>Financials</h4>
+                <p>Total: ₹{formData.total}</p>
+                <p>Paid: ₹{formData.paid}</p>
+                <p><strong>Due: ₹{formData.total - formData.paid}</strong></p>
               </div>
               <div className="review-card-mini">
                 <h4>Delivery</h4>
@@ -373,7 +460,7 @@ const NewOrder = () => {
                 {Object.entries(formData.measurements).map(([key, val]) => (
                   <div key={key} className="m-pill">
                     <span className="mp-label">{key.replace('_', ' ')}:</span>
-                    <span className="mp-val">{val}"</span>
+                    <span className="mp-val">{val}{formData.measurementUnit === 'cm' ? 'cm' : '"'}</span>
                   </div>
                 ))}
               </div>
@@ -398,12 +485,26 @@ const NewOrder = () => {
           <button 
             className="btn-primary btn-pulsate" 
             id="wizard-continue-btn"
-            onClick={step === 5 ? () => {
-              alert('Order Created Successfully!');
-              navigate('/orders');
+            onClick={step === 6 ? () => {
+              if (isEditMode) {
+                updateOrder(formData);
+                alert('Order Updated Successfully!');
+                navigate(`/orders/${formData.id}`);
+              } else {
+                const newId = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+                const finalOrder = {
+                  ...formData,
+                  id: newId,
+                  date: new Date().toISOString().split('T')[0],
+                  status: 'Pending'
+                };
+                addOrder(finalOrder);
+                alert('Order Created Successfully!');
+                navigate('/orders');
+              }
             } : handleNext}
           >
-            {step === 5 ? 'Create Order' : 'Continue'} <ArrowRight size={18} />
+            {step === 6 ? (isEditMode ? 'Update Order' : 'Create Order') : 'Continue'} <ArrowRight size={18} />
           </button>
         </div>
       </div>

@@ -130,3 +130,5 @@ textarea {
   background: #d1fae5;
   color: var(--color-delivered);
 }
+.badge-active { background: #e0f2fe; color: #0ea5e9; }
+.badge-cancelled { background: #f1f5f9; color: #94a3b8; }

@@ -503,3 +503,13 @@ input:checked + .slider:before { transform: translateX(20px); }
     grid-template-columns: 1fr;
   }
 }
+
+.financials-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); margin-top: var(--spacing-md); }
+.balance-preview-card { grid-column: span 2; background: var(--color-primary-soft); padding: var(--spacing-lg); border-radius: var(--radius-lg); display: flex; justify-content: space-between; align-items: center; border: 1px dashed var(--color-primary); }
+.bp-label { font-weight: 600; color: var(--color-primary-dark); }
+.bp-value { font-size: 1.5rem; font-weight: 800; color: var(--color-primary); }
+
+.measurement-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg); }
+.unit-toggle { display: flex; background: var(--color-bg); border-radius: var(--radius-md); padding: 4px; gap: 4px; }
+.unit-toggle button { padding: 4px 12px; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600; color: var(--color-text-muted); transition: all var(--transition-fast); }
+.unit-toggle button.active { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }

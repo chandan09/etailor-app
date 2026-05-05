@@ -8,36 +8,34 @@ import {
   CheckCircle2, 
   CreditCard,
   User,
-  Scissors
+  Scissors,
+  Phone,
+  Mail,
+  MapPin
 } from 'lucide-react';
 import './OrderDetail.css';
+
+import { useOrders } from '../context/OrderContext';
 
 const OrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getOrderById } = useOrders();
+  const order = getOrderById(id);
 
-  // Mock data fetching based on ID
-  const order = {
-    id: id || 'ORD-7241',
-    customer: 'Priya Sharma',
-    mobile: '+91 98765 43210',
-    item: 'Bridal Blouse',
-    date: '2026-05-01',
-    delivery: '2026-05-05',
-    status: 'In Progress',
-    total: 2500,
-    paid: 1000,
-    urgent: true,
-    measurements: {
-      length: '14.5"',
-      shoulder: '14"',
-      chest: '36"',
-      waist: '30"',
-      neck_front: '7"',
-      neck_back: '9"',
-      sleeve_length: '10"',
-    }
-  };
+  if (!order) {
+    return (
+      <div className="order-detail-page">
+        <button className="back-btn" onClick={() => navigate('/orders')}>
+          <ArrowLeft size={20} /> Back to Orders
+        </button>
+        <div className="error-state">
+          <h2>Order Not Found</h2>
+          <p>We couldn't find an order with ID: {id}</p>
+        </div>
+      </div>
+    );
+  }
 
   const steps = [
     { label: 'Accepted', date: 'May 1, 10:00 AM', completed: true },
@@ -53,71 +51,127 @@ const OrderDetail = () => {
         <button className="back-btn" onClick={() => navigate('/orders')}>
           <ArrowLeft size={20} /> Back to Orders
         </button>
+        <div className="order-main-info">
+          <div className="id-group">
+            <h1>#{order.id}</h1>
+            <span className={`service-type-badge ${order.serviceType}`}>{order.serviceType}</span>
+          </div>
+          <p className="order-subtitle">{order.category.toUpperCase()} • Ordered on {order.date}</p>
+        </div>
+        
+        <div className="delivery-deadline">
+          <div className="d-icon"><Clock size={20} /></div>
+          <div>
+            <p className="d-label">Expected Delivery</p>
+            <p className="d-value">{order.deliveryDate || 'TBD'}</p>
+          </div>
+        </div>
+
+        <div className="order-badges">
+          {order.urgency && <span className="badge badge-urgent">High Priority</span>}
+          <span className={`badge badge-${order.status.toLowerCase()}`}>{order.status}</span>
+        </div>
         <div className="header-actions">
-          <button className="outline-btn"><Share2 size={18} /> WhatsApp</button>
+          <button className="outline-btn"><Share2 size={18} /> Share</button>
           <button className="btn-primary"><Printer size={18} /> Print Invoice</button>
         </div>
       </div>
 
       <div className="detail-grid">
         <div className="detail-main">
-          <div className="premium-card info-section">
-            <div className="section-title">
-              <div className="id-badge">#{order.id}</div>
-              {order.urgent && <span className="badge badge-urgent">Urgent Priority</span>}
+          <div className="premium-card customer-card">
+            <div className="card-header">
+              <h3>Customer Information</h3>
+              <button 
+                className="text-btn"
+                onClick={() => navigate(`/new-order?edit=${order.id}`)}
+              >
+                Edit
+              </button>
             </div>
-            <div className="info-grid">
+            <div className="customer-info-grid">
               <div className="info-item">
                 <User size={18} />
                 <div>
-                  <p className="label">Customer</p>
-                  <p className="value">{order.customer}</p>
-                  <p className="sub-value">{order.mobile}</p>
+                  <p className="label">Full Name</p>
+                  <p className="value">{order.customerName}</p>
                 </div>
               </div>
               <div className="info-item">
-                <Scissors size={18} />
+                <Phone size={18} />
                 <div>
-                  <p className="label">Item Type</p>
-                  <p className="value">{order.item}</p>
+                  <p className="label">Mobile Number</p>
+                  <p className="value">{order.mobile}</p>
+                </div>
+              </div>
+              <div className="info-item full-width">
+                <MapPin size={18} />
+                <div>
+                  <p className="label">Primary Address</p>
+                  <p className="value">{order.address || 'No address provided.'}</p>
                 </div>
               </div>
               <div className="info-item">
-                <Clock size={18} />
+                <Mail size={18} />
                 <div>
-                  <p className="label">Delivery Date</p>
-                  <p className="value">{order.delivery}</p>
-                </div>
-              </div>
-              <div className="info-item">
-                <CreditCard size={18} />
-                <div>
-                  <p className="label">Payment Status</p>
-                  <p className={`value ${order.total - order.paid > 0 ? 'text-urgent' : 'text-success'}`}>
-                    {order.total - order.paid > 0 ? `₹${order.total - order.paid} Pending` : 'Fully Paid'}
-                  </p>
+                  <p className="label">Email Address</p>
+                  <p className="value">{order.email || 'N/A'}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="premium-card measurement-section">
-            <h3>Measurement Profile</h3>
-            <div className="m-display-grid">
-              {Object.entries(order.measurements).map(([key, val]) => (
-                <div key={key} className="m-item">
-                  <span className="m-label">{key.replace('_', ' ').toUpperCase()}</span>
-                  <span className="m-value">{val}</span>
-                </div>
-              ))}
+          <div className="premium-card financials-card">
+            <div className="card-header">
+              <h3>Financial Overview</h3>
+              <button 
+                className="text-btn"
+                onClick={() => navigate(`/new-order?edit=${order.id}&step=4`)}
+              >
+                Edit
+              </button>
             </div>
-            <div className="m-diagram-preview">
-              {/* Simplified Diagram Preview */}
-              <svg viewBox="0 0 100 120" className="mini-anatomy">
-                 <path d="M50,10 Q60,10 65,20 T70,40 L75,90 L25,90 L30,40 Q35,10 50,10" fill="none" stroke="var(--color-primary)" strokeWidth="1" />
-                 <line x1="25" y1="50" x2="75" y2="50" stroke="var(--color-urgent)" strokeDasharray="2" strokeWidth="0.5" />
-              </svg>
-              <p>Visual Guide for {order.item}</p>
+            <div className="financials-grid">
+              {/* ... financials content ... */}
+              <div className="fin-item">
+                <p className="f-label">Total Amount</p>
+                <p className="f-value">₹{order.total}</p>
+              </div>
+              <div className="fin-item">
+                <p className="f-label">Advance Paid</p>
+                <p className="f-value text-success">₹{order.paid}</p>
+              </div>
+              <div className="fin-item highlight">
+                <p className="f-label">Balance Due</p>
+                <p className={`f-value ${order.total - order.paid > 0 ? 'text-urgent' : 'text-success'}`}>
+                  ₹{order.total - order.paid}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="premium-card measurements-card">
+            <div className="card-header">
+              <h3>Measurement Profile</h3>
+              <button 
+                className="text-btn"
+                onClick={() => navigate(`/new-order?edit=${order.id}&step=3`)}
+              >
+                Edit
+              </button>
+            </div>
+            <div className="measurements-display-grid">
+              {/* ... measurements content ... */}
+              {Object.entries(order.measurements || {}).length > 0 ? (
+                Object.entries(order.measurements).map(([key, val]) => (
+                  <div key={key} className="m-display-item">
+                    <p className="m-label">{key.replace('_', ' ')}</p>
+                    <p className="m-val">{val}{order.measurementUnit === 'cm' ? 'cm' : '"'}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="no-data">No measurements recorded.</p>
+              )}
             </div>
           </div>
         </div>
@@ -141,9 +195,17 @@ const OrderDetail = () => {
           </div>
 
           <div className="premium-card notes-card">
-            <h3>Special Instructions</h3>
+            <div className="card-header">
+              <h3>Special Instructions</h3>
+              <button 
+                className="text-btn"
+                onClick={() => navigate(`/new-order?edit=${order.id}&step=5`)}
+              >
+                Edit
+              </button>
+            </div>
             <p className="notes-text">
-              "Customer requested extra padding and deep neck in the back. Use golden piping on the borders."
+              {order.description || "No special instructions provided."}
             </p>
           </div>
         </div>

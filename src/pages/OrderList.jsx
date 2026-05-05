@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, 
@@ -9,27 +9,48 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useSearch } from '../context/SearchContext';
+import { useOrders } from '../context/OrderContext';
 import './OrderList.css';
 
 const OrderList = () => {
   const { searchTerm } = useSearch();
+  const { orders, updateOrderStatus, toggleUrgency } = useOrders();
   const [activeTab, setActiveTab] = useState('all');
+  const [activeMenu, setActiveMenu] = useState(null); 
 
-  const orders = [
-    { id: 'ORD-7241', customer: 'Priya Sharma', item: 'Bridal Blouse', date: '2026-05-01', delivery: '2026-05-05', status: 'In Progress', total: 2500, paid: 1000, urgent: true },
-    { id: 'ORD-7238', customer: 'Anjali Nair', item: 'Designer Saree', date: '2026-04-28', delivery: '2026-05-06', status: 'Accepted', total: 4500, paid: 4500, urgent: false },
-    { id: 'ORD-7235', customer: 'Meera Das', item: 'Lehenga Choli', date: '2026-04-25', delivery: '2026-05-02', status: 'Completed', total: 8000, paid: 5000, urgent: false },
-    { id: 'ORD-7232', customer: 'Sneha Rao', item: 'Kurti', date: '2026-04-20', delivery: '2026-04-25', status: 'Delivered', total: 1200, paid: 1200, urgent: false },
-  ];
+  useEffect(() => {
+    const closeMenu = () => setActiveMenu(null);
+    document.addEventListener('click', closeMenu);
+    return () => document.removeEventListener('click', closeMenu);
+  }, []);
 
-  const filteredOrders = orders.filter(order => 
-    order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.item.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const tabs = ['all', 'urgent', 'pending', 'active', 'completed', 'delivered', 'cancelled'];
+
+  const handleStatusUpdate = (orderId, newStatus) => {
+    updateOrderStatus(orderId, newStatus);
+    setActiveMenu(null);
+  };
+
+  const handleUrgencyToggle = (orderId) => {
+    toggleUrgency(orderId);
+    setActiveMenu(null);
+  };
+
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = (
+      order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.status.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (activeTab === 'all') return matchesSearch;
+    if (activeTab === 'urgent') return matchesSearch && order.urgency;
+    return matchesSearch && order.status.toLowerCase() === activeTab;
+  });
 
   const getStatusBadge = (status, urgent) => {
-    if (urgent && status !== 'Delivered') return <span className="badge badge-urgent">Urgent!</span>;
+    if (urgent && status !== 'Delivered' && status !== 'Cancelled') return <span className="badge badge-urgent">Urgent!</span>;
     const lower = status.toLowerCase();
     return <span className={`badge badge-${lower}`}>{status}</span>;
   };
@@ -51,11 +72,11 @@ const OrderList = () => {
             type="text" 
             placeholder="Search by Order ID, Customer..." 
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            readOnly
           />
         </div>
         <div className="tabs">
-          {['all', 'pending', 'active', 'completed', 'delivered'].map(tab => (
+          {tabs.map(tab => (
             <button 
               key={tab} 
               className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
@@ -86,16 +107,16 @@ const OrderList = () => {
                 <td>
                   <div className="order-info">
                     <Link to={`/orders/${order.id}`} className="order-id">#{order.id}</Link>
-                    <span className="order-item">{order.item}</span>
+                    <span className="order-item">{order.category}</span>
                   </div>
                 </td>
                 <td>
                   <div className="customer-cell">
-                    <p className="c-name">{order.customer}</p>
+                    <p className="c-name">{order.customerName}</p>
                     <p className="c-date">Ordered: {order.date}</p>
                   </div>
                 </td>
-                <td>{getStatusBadge(order.status, order.urgent)}</td>
+                <td>{getStatusBadge(order.status, order.urgency)}</td>
                 <td>
                   <div className="financial-cell">
                     <p className="total">₹{order.total}</p>
@@ -108,15 +129,44 @@ const OrderList = () => {
                 </td>
                 <td>
                   <div className="delivery-cell">
-                    <p className={new Date(order.delivery) < new Date() ? 'overdue' : ''}>
-                      {order.delivery}
+                    <p className={new Date(order.deliveryDate) < new Date() ? 'overdue' : ''}>
+                      {order.deliveryDate}
                     </p>
                   </div>
                 </td>
                 <td>
                   <div className="action-cell">
                     <button className="icon-btn" title="Share via WhatsApp"><Share2 size={16} /></button>
-                    <button className="icon-btn"><MoreVertical size={16} /></button>
+                    <div className="menu-container">
+                      <button 
+                        className={`icon-btn ${activeMenu === order.id ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenu(activeMenu === order.id ? null : order.id);
+                        }}
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      
+                      {activeMenu === order.id && (
+                        <div className="dropdown-menu">
+                          <p className="menu-title">Change Status</p>
+                          {['Pending', 'Active', 'Completed', 'Delivered', 'Cancelled'].map(s => (
+                            <button 
+                              key={s} 
+                              className={`menu-item ${order.status === s ? 'current' : ''}`}
+                              onClick={() => handleStatusUpdate(order.id, s)}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                          <div className="menu-divider"></div>
+                          <button className="menu-item urgent-toggle" onClick={() => handleUrgencyToggle(order.id)}>
+                            {order.urgency ? 'Remove Urgent Mark' : 'Mark as Urgent'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -125,22 +175,6 @@ const OrderList = () => {
         </table>
       </div>
 
-      <div className="pending-summary">
-        <div className="premium-card summary-item urgent">
-          <AlertCircle size={24} />
-          <div>
-            <h3>3 Urgent Orders</h3>
-            <p>Awaiting completion today</p>
-          </div>
-        </div>
-        <div className="premium-card summary-item balance">
-          <div className="val-group">
-            <p>Total Pending Amount</p>
-            <h3>₹12,450</h3>
-          </div>
-          <button className="btn-link">View Details</button>
-        </div>
-      </div>
     </div>
   );
 };

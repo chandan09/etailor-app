@@ -8,7 +8,71 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: var(--spacing-xl);
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
 }
+
+.id-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.service-type-badge {
+  padding: 0.125rem 0.625rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+}
+
+.service-type-badge.stitching { color: var(--color-primary); border-color: var(--color-primary-soft); }
+.service-type-badge.alteration { color: var(--color-pending); border-color: #fef3c7; }
+
+.delivery-deadline {
+  background: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.d-icon {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+}
+
+.d-label { font-size: 0.625rem; color: var(--color-text-muted); font-weight: 600; text-transform: uppercase; }
+.d-value { font-size: 1rem; font-weight: 700; color: var(--color-text-main); }
+
+.financials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) 0;
+}
+
+.fin-item {
+  padding: var(--spacing-md);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+
+.fin-item.highlight {
+  background: #fff;
+  border: 1px solid var(--color-border);
+}
+
+.f-label { font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.25rem; }
+.f-value { font-size: 1.125rem; font-weight: 700; }
 
 .back-btn {
   display: flex;
@@ -94,6 +158,34 @@
   margin-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
   padding-bottom: var(--spacing-sm);
+}
+
+.measurements-display-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) 0;
+}
+
+.m-display-item {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-primary);
+}
+
+.m-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.125rem;
+}
+
+.m-val {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-main);
 }
 
 .m-display-grid {
