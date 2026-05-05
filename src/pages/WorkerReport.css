@@ -1,0 +1,123 @@
+.worker-report-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.worker-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.w-stat {
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.w-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.w-stat-icon.s { background: var(--color-primary-soft); color: var(--color-primary); }
+.w-stat-icon.a { background: #fff7ed; color: #f97316; }
+.w-stat-icon.e { background: #f0fdf4; color: #22c55e; }
+
+.worker-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.worker-table th {
+  text-align: left;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.worker-table td {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.worker-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-weight: 600;
+}
+
+.w-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--color-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+.eff-badge {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.status-dot.online { background: var(--color-delivered); }
+.status-dot.offline { background: var(--color-text-muted); }
+
+.perf-bar {
+  width: 100px;
+  height: 6px;
+  background: var(--color-bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.perf-fill {
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.top-performer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-xl);
+  background: linear-gradient(to right, #fff, var(--color-primary-soft));
+}
+
+.award-icon {
+  color: #fbbf24;
+}
+
+.performer-details {
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .worker-stats-row {
+    grid-template-columns: 1fr;
+  }
+}
